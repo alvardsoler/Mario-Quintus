@@ -8,7 +8,7 @@ window.addEventListener("load",function() {
 	
 
 	Q.loadTMX("level.tmx", function(){
-		Q.load("mario_small.png, mario_small.json, goomba.png, goomba.json, bloopa.png, bloopa.json", function(){
+		Q.load("mario_small.png, mario_small.json, goomba.png, goomba.json, bloopa.png, bloopa.json, princess.png", function(){
 			Q.compileSheets("mario_small.png", "mario_small.json");
 			Q.compileSheets("goomba.png", "goomba.json");
 			Q.compileSheets("bloopa.png", "bloopa.json");
@@ -24,7 +24,12 @@ window.addEventListener("load",function() {
 		stage.add("viewport").follow(mario);
 		stage.viewport.offsetX = -120;
 		stage.viewport.offsetY = 130;
-		stage.insert(new Q.Bloopa());
+		stage.insert(new Q.Goomba({x:1595, y: 380}));
+		stage.insert(new Q.Goomba({x:1655, y: 380}));
+		stage.insert(new Q.Bloopa({x:1167, y: 380}));
+		stage.insert(new Q.Bloopa({x:765, y: 380}));
+		stage.insert(new Q.Princess({x: 1990, y: 380}));
+
 	});
 
 	Q.Sprite.extend("Mario", {
@@ -49,6 +54,28 @@ window.addEventListener("load",function() {
 			this.p.x = 150;
 			this.p.y = 380;
 		}
+	});
+
+	Q.Sprite.extend("Princess", {
+		init: function(p){
+			this._super(p, {
+				asset: "princess.png"								
+			});
+			this.add("2d");
+
+			this.on("hit", function(collision){
+				if (collision.obj.isA("Mario")){
+					this.trigger("win");
+				}
+			});
+			
+			this.on("win", function(){
+				console.log("win");
+			});
+			
+		}
+
+		
 	});
 
 	Q.Sprite.extend("Goomba", {
