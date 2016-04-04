@@ -8,9 +8,10 @@ window.addEventListener("load",function() {
 	
 
 	Q.loadTMX("level.tmx", function(){
-		Q.load("mario_small.png, mario_small.json, goomba.png, goomba.json", function(){
+		Q.load("mario_small.png, mario_small.json, goomba.png, goomba.json, bloopa.png, bloopa.json", function(){
 			Q.compileSheets("mario_small.png", "mario_small.json");
 			Q.compileSheets("goomba.png", "goomba.json");
+			Q.compileSheets("bloopa.png", "bloopa.json");
 			Q.stageScene("level1");
 		});
 
@@ -23,7 +24,7 @@ window.addEventListener("load",function() {
 		stage.add("viewport").follow(mario);
 		stage.viewport.offsetX = -120;
 		stage.viewport.offsetY = 130;
-		stage.insert(new Q.Goomba());
+		stage.insert(new Q.Bloopa());
 	});
 
 	Q.Sprite.extend("Mario", {
@@ -39,6 +40,9 @@ window.addEventListener("load",function() {
 		step: function(dt){
 			if (this.p.y > 700)
 				this.death();
+			if (Q.inputs["fire"]){
+				console.log("x: " + this.p.x + " y: " + this.p.y);
+			}
 		},
 
 		death: function(){
@@ -46,6 +50,7 @@ window.addEventListener("load",function() {
 			this.p.y = 380;
 		}
 	});
+
 	Q.Sprite.extend("Goomba", {
 		init: function(p){
 			this._super(p, {
@@ -69,6 +74,39 @@ window.addEventListener("load",function() {
 		}
 		
 	});
-	
+
+	Q.Sprite.extend("Bloopa", {
+		init: function(p){
+			this._super(p, {
+				sheet: "bloopa",	
+				frames: 2,							
+				x: 300,
+				y: 528,
+				vy: -150
+			});
+
+			this.add("2d");			
+			this.on("bump.left, bump.right, bump.bottom", function(collision){
+				if(collision.obj.isA("Mario")){
+					collision.obj.destroy();				
+				}
+			});
+			this.on("bump.top", function(collision){
+				if(collision.obj.isA("Mario")){
+					this.destroy();
+				}
+			});
+		},
+
+		step: function(dt){
+			if (this.p.vy == 0) 
+				this.p.vy = -150;
+
+			this.p.vy -= dt * 9.8;
+			this.p.y += this.p.vy * dt;		
+		}
+
+		
+	});
 
 });
