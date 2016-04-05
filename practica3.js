@@ -7,6 +7,24 @@ window.addEventListener("load",function() {
    }).controls().touch();
 	
 
+	Q.animations("mario_anim",{ //Animations for Mario
+		run: {frames: [0,1,2], rate: 1/10},
+		stand: { frames: [0], rate: 1/50 },
+		jump: { frames: [0], rate: 1/50, loop: false}
+	});
+
+	Q.animations("goomba_anim",{ //Animations for Mario		
+		move: { frames: [0,1], rate: 1/50 },
+		die: { frames: [2], rate: 1/50, loop: false, trigger: "death_event"}
+	});
+	
+	Q.animations("bloopa_anim",{ //Animations for Mario		
+		move: { frames: [0,1], rate: 1/50 },
+		die: { frames: [2], rate: 1/50, loop: false, trigger: "death_event"}
+	});
+
+	
+
 	Q.loadTMX("level.tmx", function(){
 		Q.load("mario_small.png, mario_small.json, goomba.png, goomba.json, bloopa.png, bloopa.json, princess.png, mainTitle.png", function(){
 			Q.compileSheets("mario_small.png", "mario_small.json");
@@ -83,24 +101,90 @@ window.addEventListener("load",function() {
 	Q.Sprite.extend("Mario", {
 		init: function(p){
 			this._super(p, {
-				sheet: "marioR",	
-				frames: 2,							
+				sheet: "marioR", // Setting a sprite sheet sets sprite width and height
+				sprite: "mario_anim",
+				frame:0,
 				x: 150,
-				y: 380
+				y: 380,
+				jumpSpeed: -500,
+				jumped: false
 			});
 			this.add("2d, platformerControls, animation, tween");			
+			this.on("jump",this, function(){
+				if (!this.p.jumped){
+					// sonido
+					this.p.jumped = true;
+				}
+			});
+
+			this.on("jumped", this, function(){
+				this.p.jumped = false;
+			});
 		},
 		step: function(dt){
-			if (this.p.y > 700)
-				this.death();
+			 if(this.p.vx > 0) { // derecha
+	          if(this.p.landed > 0) {
+	          	this.p.sheet = "marioR";
+	            this.play("run");
+	          } else {
+	            this.p.sheet = "marioJumpR";
+	            this.play("jump");
+	          }
+
+	          this.p.direction = "right";
+	        } else if(this.p.vx < 0) {
+
+	          if(this.p.landed > 0) {
+	            this.p.sheet = "marioL";
+	            this.play("run");
+	          } else {
+	           	this.p.sheet = "marioJumpL";
+	            this.play("jump");
+	          }
+
+	          this.p.direction = "left";
+	        } else {
+
+	          if(this.p.direction == "right"){
+	          	this.p.sheet = "marioR";
+	            this.play("stand");
+	          }else{
+	          	this.p.sheet = "marioL";
+	            this.play("stand");
+	          }
+	        }
+
+	        if(this.p.vy != 0){
+	          if(this.p.direction == "right"){
+	          	this.p.sheet = "marioJumpR";
+	            this.play("jump");
+	          }
+	          else{
+	          	this.p.sheet = "marioJumpL";
+	            this.play("jump");
+	          }
+	        }
+
+	        if (this.p.death){
+	        	this.p.sheet = "marioDie";
+	        	this.p.vx = 0;this.p.vy = 0;
+
+	        	this.animate({y: this.p.y - 50},0.5, Q.Easing.Linear, {callback: function(){ 
+	        		// La animación que "lanza" mario hacia arriba	        		
+	        		this.destroy();
+					Q.stageScene("endGame",1, {label: "You died"});			
+
+	        	}});
+	        }
+
+			if (this.p.y > 700){
+					this.destroy();
+					Q.stageScene("endGame",1, {label: "You died"});
+			}
+					
 			if (Q.inputs["fire"]){
 				console.log("x: " + this.p.x + " y: " + this.p.y);
 			}
-		},
-
-		death: function(){
-			this.p.x = 150;
-			this.p.y = 380;
 		}
 	});
 
@@ -166,8 +250,8 @@ window.addEventListener("load",function() {
 			this.add("2d");			
 			this.on("bump.left, bump.right, bump.bottom", function(collision){
 				if(collision.obj.isA("Mario")){
-					Q.stageScene("endGame",1, {label: "You died"});
-					collision.obj.destroy();				
+					collision.obj.p.death = true;					
+				//	collision.obj.destroy();				
 				}
 			});
 			this.on("bump.top", function(collision){
