@@ -41,7 +41,7 @@ window.addEventListener("load",function() {
 	var container = stage.insert(new Q.UI.Container({
 			x: Q.width/2, y: Q.height/2
 		}));
-
+		Q.state.set("points", 0);
 		//Button
 		var button = container.insert(new Q.UI.Button({ x: 0, y: 0, fill: "#CCCCCC",
 		asset: "mainTitle.png" }))
@@ -49,10 +49,12 @@ window.addEventListener("load",function() {
 		button.on("click", function(){
 			Q.clearStages();
 			Q.stageScene("level1");
+			Q.stageScene("HUD", 1);
 		});
 		Q.input.on("confirm",this,function(){
 			Q.clearStages();
 			Q.stageScene("level1");
+			Q.stageScene("HUD", 1);
 		});
 
 	});
@@ -67,11 +69,13 @@ window.addEventListener("load",function() {
 		button.on("click", function(){
 			Q.clearStages();
 			Q.stageScene("level1");
+			Q.stageScene("HUD", 1);
 		});
 		Q.input.on("confirm",this,function(){
 			Q.clearStages();
 			Q.stageScene("level1");
-		});
+			Q.stageScene("HUD", 1);
+			});
 
 		container.fit(20);
 
@@ -95,6 +99,7 @@ window.addEventListener("load",function() {
 	Q.scene("level1", function(stage){
 		Q.stageTMX("level.tmx", stage);				
 		var mario = stage.insert(new Q.Mario());
+		
 		stage.add("viewport").follow(mario);
 		stage.viewport.offsetX = -120;
 		stage.viewport.offsetY = 130;
@@ -104,6 +109,22 @@ window.addEventListener("load",function() {
 		stage.insert(new Q.Bloopa({x:765, y: 380}));
 		stage.insert(new Q.Coin({x: 350, y: 500}));
 		stage.insert(new Q.Princess({x: 1990, y: 380}));
+	});
+
+	Q.UI.Text.extend("Score", {
+		init: function(p){
+			this._super({label: "Score: 0", x: 70, y: 0});
+
+			Q.state.on("change.points", this, "points");
+		},
+		points: function(points){
+			this.p.label = "Score: " + points;
+		}
+	});
+	Q.scene("HUD", function(stage){
+		var container = stage.insert(new Q.UI.Container({x: 0, y: 0}));
+
+		var points = container.insert(new Q.Score());
 
 	});
 
