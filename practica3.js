@@ -52,8 +52,10 @@ window.addEventListener("load",function() {
 	var container = stage.insert(new Q.UI.Container({
 			x: Q.width/2, y: Q.height/2
 		}));
+
 		Q.state.set("points", 0);
 		Q.state.set("lifes", 3);
+
 		//Button
 		var button = container.insert(new Q.UI.Button({ x: 0, y: 0, fill: "#CCCCCC",
 		asset: "mainTitle.png" }))
@@ -72,6 +74,7 @@ window.addEventListener("load",function() {
 			x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
 		}));
 		Q.state.set("points", 0);
+		Q.state.set("lifes", 3);
 
 		var button = container.insert(new Q.UI.Button({x: 0, y:0, fill: "#CCCCCC", label: "Play Again"}));
 		var label = container.insert(new Q.UI.Text({x:10, y:-10 - button.p.h, label:stage.options.label}));
@@ -118,9 +121,18 @@ window.addEventListener("load",function() {
 		stage.insert(new Q.Princess({x: 1990, y: 380}));
 	});
 
+	Q.scene("HUD", function(stage){
+		var container = stage.insert(new Q.UI.Container({x: 0, y: 0}));
+		var points = container.insert(new Q.Score());
+		var lifes = container.insert(new Q.Lifes());
+
+	});
+
+	/* UI */
+
 	Q.UI.Text.extend("Score", {
 		init: function(p){
-			this._super({label: "Score: 0", x: 70, y: 0});
+			this._super({label: "Score: " + Q.state.p.points, x: 70, y: 0});
 
 			Q.state.on("change.points", this, "points");
 		},
@@ -128,12 +140,18 @@ window.addEventListener("load",function() {
 			this.p.label = "Score: " + points;
 		}
 	});
-	Q.scene("HUD", function(stage){
-		var container = stage.insert(new Q.UI.Container({x: 0, y: 0}));
 
-		var points = container.insert(new Q.Score());
+	Q.UI.Text.extend("Lifes", {
+		init: function(p){
+			this._super({label: "Lifes: " + Q.state.p.lifes, x: Q.width-70, y: 0});
 
+			Q.state.on("change.lifes", this, "lifes");
+		},
+		lifes: function(lifes){
+			this.p.label = "Lifes: " + lifes;
+		}
 	});
+
 
 	Q.Sprite.extend("Mario", {
 		init: function(p){
@@ -208,26 +226,34 @@ window.addEventListener("load",function() {
 	        if (this.p.death && !this.p.dead){
 	        	this.p.sheet = "marioDie";
 	        	this.p.dead = true;
-	        	this.p.vx = 0;this.p.vy = 0;
+	        	this.p.vx = 0;this.p.vy = 0;      	
 	        	Q.audio.stop("music_main.ogg");
 	        	Q.audio.play("music_die.ogg");
 	        	this.animate({y: this.p.y - 50},0.5, Q.Easing.Linear, {callback: function(){ 
 	        		// La animación que "lanza" mario hacia arriba	        		
 	        		this.destroy();
-					Q.stageScene("endGame",1, {label: "You died"});			
+	        		Q.state.dec("lifes",1);
+	        		if (Q.state.p.lifes <= 0)
+						Q.stageScene("endGame",1, {label: "You died"});			
+					else
+						StartLevel1();
 
 	        	}});
 	        }
 
 			if (this.p.y > 700){
 					this.destroy();
-					Q.stageScene("endGame",1, {label: "You died"});
+	        	Q.state.dec("lifes",1);
+	        	if (Q.state.p.lifes <= 0)
+					Q.stageScene("endGame",1, {label: "You died"});			
+				else
+					StartLevel1();			
 			}
 					
 			if (Q.inputs["fire"]){
 				console.log("x: " + this.p.x + " y: " + this.p.y);
 			}
-		}
+		}				
 	});
 
 	Q.Sprite.extend("Princess", {
