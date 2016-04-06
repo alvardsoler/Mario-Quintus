@@ -1,11 +1,15 @@
 window.addEventListener("load",function() {
-	var Q = window.Q = Quintus().include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, TMX")
+	var Q = window.Q = Quintus({audioSupported: ["ogg", "mp3"]}).include("Sprites, Scenes, Input, 2D, Anim, Touch, UI, TMX, Audio")
+	.enableSound()
 	.setup(  {
     width: 320,  // width of created canvas
     height: 420, // height of created canvas
     maximize: false // set to true to maximize to screen, "touch" to maximize on touch devices
    }).controls().touch();
 	
+	Q.load(["coin.ogg", "music_die.ogg", "music_level_complete.ogg", "music_main.ogg"], function(){
+
+	});
 
 	Q.animations("mario_anim",{ //Animations for Mario
 		run: {frames: [0,1,2], rate: 1/10},
@@ -36,6 +40,13 @@ window.addEventListener("load",function() {
 
 		
 	});
+	var StartLevel1 = function(){
+		Q.clearStages();
+		Q.audio.stop();
+		Q.stageScene("level1");
+		Q.stageScene("HUD", 1);
+		Q.audio.play("music_main.ogg", {loop: true});
+	};
 
 	Q.scene("mainTitle", function(stage){
 	var container = stage.insert(new Q.UI.Container({
@@ -48,14 +59,10 @@ window.addEventListener("load",function() {
 		asset: "mainTitle.png" }))
 
 		button.on("click", function(){
-			Q.clearStages();
-			Q.stageScene("level1");
-			Q.stageScene("HUD", 1);
+			StartLevel1();
 		});
 		Q.input.on("confirm",this,function(){
-			Q.clearStages();
-			Q.stageScene("level1");
-			Q.stageScene("HUD", 1);
+			StartLevel1();
 		});
 
 	});
@@ -70,21 +77,19 @@ window.addEventListener("load",function() {
 		var label = container.insert(new Q.UI.Text({x:10, y:-10 - button.p.h, label:stage.options.label}));
 
 		button.on("click", function(){
-			Q.clearStages();
-			Q.stageScene("level1");
-			Q.stageScene("HUD", 1);
+			StartLevel1();
 		});
 		Q.input.on("confirm",this,function(){
-			Q.clearStages();
-			Q.stageScene("level1");
-			Q.stageScene("HUD", 1);
-			});
+			StartLevel1();
+		});
 
 		container.fit(20);
 
 	});
 
 	Q.scene("winGame", function(stage){
+		Q.audio.stop();
+		Q.audio.play("music_level_complete.ogg");
 		var container = stage.insert(new Q.UI.Container({
 			x: Q.width/2, y: Q.height/2, fill: "rgba(0,0,0,0.5)"
 		}));
@@ -92,8 +97,7 @@ window.addEventListener("load",function() {
 		var label = container.insert(new Q.UI.Text({x:10, y:-10 - button.p.h, label:stage.options.label}));
 
 		button.on("click", function(){
-			Q.clearStages();
-			Q.stageScene("level1");
+			StartLevel1();
 		});
 
 		container.fit(20);
@@ -155,7 +159,7 @@ window.addEventListener("load",function() {
 			});
 		},
 		death: function(){
-			this.p.death = true;
+			this.p.death = true;			
 		},
 		step: function(dt){
 			 if(this.p.vx > 0) { // derecha
@@ -201,10 +205,12 @@ window.addEventListener("load",function() {
 	          }
 	        }
 
-	        if (this.p.death){
+	        if (this.p.death && !this.p.dead){
 	        	this.p.sheet = "marioDie";
+	        	this.p.dead = true;
 	        	this.p.vx = 0;this.p.vy = 0;
-
+	        	Q.audio.stop("music_main.ogg");
+	        	Q.audio.play("music_die.ogg");
 	        	this.animate({y: this.p.y - 50},0.5, Q.Easing.Linear, {callback: function(){ 
 	        		// La animación que "lanza" mario hacia arriba	        		
 	        		this.destroy();
@@ -237,7 +243,7 @@ window.addEventListener("load",function() {
 				}
 			});
 			
-			this.on("win", function(){
+			this.on("win", function(){				
 				Q.stageScene("winGame", 1, {label: "You win!"});
 			});
 			
@@ -263,6 +269,7 @@ window.addEventListener("load",function() {
 				if (collision.obj.isA("Mario") && !this.p.hit){
 					this.p.hit = true;
 					Q.state.inc("points", 100);
+					Q.audio.play("coin.ogg");
 					this.animate({y: this.p.y -50, angle: 360 }, 0.3, Q.Easing.Linear, {callback: function(){
 						this.destroy();
 					}});
