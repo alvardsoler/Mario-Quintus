@@ -78,6 +78,14 @@ window.addEventListener("load", function() {
         });
     };
 
+    var RestartLevel1 = function() {
+        Q.clearStages();
+
+        Q.stageScene("level1");
+        Q.stageScene("HUD", 1);
+
+    };
+
     Q.scene("mainTitle", function(stage) {
         var container = stage.insert(new Q.UI.Container({
             x: Q.width / 2,
@@ -183,8 +191,8 @@ window.addEventListener("load", function() {
             y: 380
         }));
         stage.insert(new Q.Bloopa({
-            x: 765,
-            y: 380
+            x: 310,
+            y: 500
         }));
         stage.insert(new Q.Coin({
             x: 350,
@@ -253,7 +261,6 @@ window.addEventListener("load", function() {
             this.add("2d, platformerControls, animation, tween");
             this.on("jump", this, function() {
                 if (!this.p.jumped) {
-                    // sonido
                     this.p.jumped = true;
                 }
             });
@@ -263,58 +270,54 @@ window.addEventListener("load", function() {
             });
         },
         death: function() {
-            this.p.death = true;
+            if (!this.p.death) {
+                this.del("platformerControls");
+                this.p.death = true;
+                Q.audio.play("music_die.ogg");
+            }
         },
         step: function(dt) {
-            if (this.p.vx > 0) { // derecha
-                if (this.p.landed > 0) {
-                    this.p.sheet = "marioR";
-                    this.play("run");
+            if (!this.p.dead) {
+                if (this.p.vx > 0) { // derecha
+                    if (this.p.landed > 0) {
+                        this.p.sheet = "marioR";
+                        this.play("run");
+                    } else {
+                        this.p.sheet = "marioJumpR";
+                        this.play("jump");
+                    }
+                    this.p.direction = "right";
+                } else if (this.p.vx < 0) {
+                    if (this.p.landed > 0) {
+                        this.p.sheet = "marioL";
+                        this.play("run");
+                    } else {
+                        this.p.sheet = "marioJumpL";
+                        this.play("jump");
+                    }
+                    this.p.direction = "left";
                 } else {
-                    this.p.sheet = "marioJumpR";
-                    this.play("jump");
+                    if (this.p.direction == "right") {
+                        this.p.sheet = "marioR";
+                        this.play("stand");
+                    } else {
+                        this.p.sheet = "marioL";
+                        this.play("stand");
+                    }
                 }
-
-                this.p.direction = "right";
-            } else if (this.p.vx < 0) {
-
-                if (this.p.landed > 0) {
-                    this.p.sheet = "marioL";
-                    this.play("run");
-                } else {
-                    this.p.sheet = "marioJumpL";
-                    this.play("jump");
-                }
-
-                this.p.direction = "left";
-            } else {
-
-                if (this.p.direction == "right") {
-                    this.p.sheet = "marioR";
-                    this.play("stand");
-                } else {
-                    this.p.sheet = "marioL";
-                    this.play("stand");
-                }
-            }
-
-            if (this.p.vy != 0) {
-                if (this.p.direction == "right") {
-                    this.p.sheet = "marioJumpR";
-                    this.play("jump");
-                } else {
-                    this.p.sheet = "marioJumpL";
-                    this.play("jump");
+                if (this.p.vy != 0) {
+                    if (this.p.direction == "right") {
+                        this.p.sheet = "marioJumpR";
+                        this.play("jump");
+                    } else {
+                        this.p.sheet = "marioJumpL";
+                        this.play("jump");
+                    }
                 }
             }
-
             if (this.p.death && !this.p.dead) {
                 this.p.sheet = "marioDie";
                 this.p.dead = true;
-                this.p.vx = 0;
-                this.p.vy = 0;
-                Q.audio.stop("music_main.ogg");
-                Q.audio.play("music_die.ogg");
                 this.animate({
                     y: this.p.y - 50
                 }, 0.5, Q.Easing.Linear, {
@@ -327,7 +330,7 @@ window.addEventListener("load", function() {
                                 label: "You died"
                             });
                         else
-                            StartLevel1();
+                            RestartLevel1();
 
                     }
                 });
@@ -341,7 +344,7 @@ window.addEventListener("load", function() {
                         label: "You died"
                     });
                 else
-                    StartLevel1();
+                    RestartLevel1();
             }
 
             if (Q.inputs["fire"]) {
@@ -429,13 +432,13 @@ window.addEventListener("load", function() {
                 frame: 0,
                 x: 300,
                 y: 528,
-                vy: -100
+                vy: -400
             });
 
             this.add("2d, animation, enemy");
             this.on("hit", function(collision) {
                 if (!collision.obj.isA("Mario")) {
-                    this.p.vy = -500;
+                    this.p.vy = -400;
                 }
             });
         }
