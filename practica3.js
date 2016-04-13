@@ -272,6 +272,8 @@ window.addEventListener("load", function() {
         death: function() {
             if (!this.p.death) {
                 this.del("platformerControls");
+                this.p.vx = 0;
+                this.p.vy = 0;
                 this.p.death = true;
                 Q.audio.play("music_die.ogg");
             }
