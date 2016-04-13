@@ -163,8 +163,10 @@ window.addEventListener("load", function() {
             y: -10 - button.p.h,
             label: stage.options.label
         }));
-
+        Q.state.set("points", 0);
+        Q.state.set("lifes", 3);
         button.on("click", function() {
+
             StartLevel1();
         });
 
